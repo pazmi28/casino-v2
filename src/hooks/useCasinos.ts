@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { listCasinos } from "../services/casinos";
+import { errorMessage } from "../lib/errors";
 import type { Casino, City } from "../types";
 
 export function useCasinos(city: City) {
@@ -14,7 +15,7 @@ export function useCasinos(city: City) {
       const data = await listCasinos(city);
       setCasinos(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error desconocido");
+      setError(errorMessage(e));
     } finally {
       setLoading(false);
     }

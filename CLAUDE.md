@@ -127,7 +127,11 @@ VITE_SUPABASE_ANON_KEY=
   `WheelNeighbors` ya no definen su propio mapeo), más `dozenOf`, `tableRow`,
   `isEven`, `isLow`, `isRed`. `WheelNeighbors` mide el contenedor real con
   `useLayoutEffect`+`ResizeObserver` y calcula el diámetro de cada casilla por
-  la cuerda entre números (`2·r·sin(π/37)·0.88`), eliminando el solape.
+  la cuerda entre números (`2·r·sin(π/37)·0.88`), eliminando el solape. El
+  contenedor de la rueda usa fondo claro (`bg-white border border-gray-200`,
+  mismo lenguaje visual que las tarjetas) y los números sin resaltar van con su
+  `COLOR_STYLE` pleno + `border border-black/10` (sin `opacity`, antes rojo y
+  negro casi no se distinguían). El verde tapete es solo de la mesa (`TableLayout`).
   Nueva vista `components/SearchPanel/TableLayout.tsx`: mesa europea en CSS
   grid (0, 36 números, 2 to 1, docenas y apuestas sencillas) que resalta en
   blanco la casilla exacta y en dorado todo lo que el número buscado cumple,
@@ -148,13 +152,42 @@ VITE_SUPABASE_ANON_KEY=
   ganar, notas, botón Guardar; lista de sesiones con borrado y mensaje de
   vacío). Se sustituyó el mecanismo de fechas pre-generadas de la v1 por un
   selector de fecha normal. Integrado en `App.tsx` bajo `SearchPanel`.
+- [x] Gestor de patrones (global / por casino). `parseNumbers` se movió de
+  `useSpins` a `lib/roulette.ts` (fuente única; `useSpins` la importa).
+  `services/patterns.ts` (listPatterns con `.or(casino_id.is.null,
+  casino_id.eq.<id>)` + join `pattern_numbers(number)` mapeado a `number[]`
+  plano / createPattern en dos inserts: patterns y luego pattern_numbers /
+  deletePattern, que confía en el ON DELETE CASCADE), `hooks/usePatterns.ts`
+  (patterns/loading/error/reload/add/remove, tipo completo; el parseo de
+  números lo hace el componente, no el hook) y
+  `components/PatternManager/PatternManager.tsx` (formulario nombre +
+  descripción + select confianza 1–5 + checkbox global + números con el mismo
+  aviso de inválidos que SpinHistory; tarjetas con badge Global/Este casino,
+  confianza N/5, descripción y números como círculos con `COLOR_STYLE`).
+  Integrado en `App.tsx` bajo `BetLog`. Arreglos tras la primera prueba: el
+  componente valida que haya ≥1 número válido antes de llamar al servicio (sin
+  ello se creaban patrones huérfanos sin números) y `createPattern` no llama a
+  `pattern_numbers.insert` con array vacío; el guardado usa un único `feedback`
+  (éxito o error, nunca los dos a la vez); nuevo `lib/errors.ts` con
+  `errorMessage(e)` que lee `.message` de los errores de supabase-js (no son
+  `instanceof Error`, antes salía siempre "Error desconocido"). `usePatterns.add`
+  devuelve `string | null` en vez de escribir el `error` del hook.
+- [x] Unificado el manejo de errores: `useSpins`, `useBetSessions` y
+  `useCasinos` usan ya `errorMessage()` de `lib/errors.ts` (antes el
+  `e instanceof Error` caía siempre al genérico con errores de supabase-js).
+  Nuevo helper `columnOf(n)` en `lib/roulette.ts` (columna 2-a-1: 1=…1,4,7 /
+  2=…2,5,8 / 3=…3,6,9, null para el 0). En `SpinHistory`, fila de 4 toggles
+  independientes (Docena por defecto activo; Rango, Par/Impar, Columna) encima
+  de la línea de tiempo: por cada toggle activo se añade una línea bajo la hora
+  de cada círculo (orden fijo Docena→Rango→Par/Impar→Columna), formateada con
+  `dozenOf`/`isLow`/`isEven`/`columnOf`; la línea de círculos no se filtra ni
+  cambia. Estado en un `useState` local, sin persistir.
 ### Pendiente
 - [ ] Crear proyecto en Supabase y ejecutar `schema.sql`
-- [~] Implementar `services/` y `hooks/` (hecho: casinos, spins, betSessions;
-  faltan patterns, combinations)
+- [~] Implementar `services/` y `hooks/` (hecho: casinos, spins, betSessions,
+  patterns; falta combinations)
 - [~] Trocear `App.tsx` en los componentes de arriba (hecho: SpinHistory,
-  SearchPanel/WheelNeighbors, BetLog; faltan el resto)
-- [ ] Implementar Gestor de patrones (global / por casino)
+  SearchPanel/WheelNeighbors, BetLog, PatternManager; faltan el resto)
 - [ ] Cargar `number_combinations` desde el Excel cuando esté terminado
 - [ ] Decidir despliegue (Vercel recomendado por la metodología v5.2)
 

@@ -27,3 +27,13 @@ export interface BetSession {
   notes: string | null;
   created_at: string;
 }
+
+export interface Pattern {
+  id: string;
+  casino_id: string | null; // null = patrón global
+  name: string;
+  description: string | null;
+  confidence: number | null; // 1–5
+  created_at: string;
+  numbers: number[]; // viene de pattern_numbers vía join
+}

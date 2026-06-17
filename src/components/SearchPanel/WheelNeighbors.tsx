@@ -60,7 +60,7 @@ export function WheelNeighbors({ searched }: Props) {
   return (
     <div
       ref={ref}
-      className="relative mx-auto w-full max-w-[380px] aspect-square rounded-full bg-emerald-950"
+      className="relative mx-auto w-full max-w-[380px] aspect-square rounded-full bg-white border border-gray-200"
     >
       {size > 0 &&
         ROULETTE_SEQUENCE.map((num, i) => {
@@ -72,7 +72,7 @@ export function WheelNeighbors({ searched }: Props) {
           const isPrimary = primary.has(num);
           const isSecondary = secondary.has(num);
 
-          let highlight = `${COLOR_STYLE[COLOR_MAP[num]]} opacity-60 border-black/30`;
+          let highlight = `${COLOR_STYLE[COLOR_MAP[num]]} border border-black/10`;
           if (isSecondary)
             highlight = "bg-amber-300 text-gray-900 border-amber-500";
           if (isPrimary)

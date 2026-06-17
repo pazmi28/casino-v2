@@ -34,6 +34,14 @@ export function tableRow(n: number): "top" | "mid" | "bottom" | null {
   return "bottom";
 }
 
+// Columna física de la mesa (el "column bet" 2 a 1): 1 = …1,4,7 · 2 = …2,5,8 ·
+// 3 = …3,6,9. null para el 0.
+export function columnOf(n: number): 1 | 2 | 3 | null {
+  if (n === 0) return null;
+  const m = n % 3;
+  return m === 1 ? 1 : m === 2 ? 2 : 3;
+}
+
 // Par/impar. El 0 no es par a efectos de apuesta.
 export function isEven(n: number): boolean {
   return n !== 0 && n % 2 === 0;
@@ -47,6 +55,29 @@ export function isLow(n: number): boolean {
 // Rojo según el mapeo estándar; false para el 0 (verde).
 export function isRed(n: number): boolean {
   return COLOR_MAP[n] === "R";
+}
+
+// Parseo único de entrada de números (tiradas, números de patrones…):
+// separa por comas, ignora vacíos, valida 0–36 y separa válidos de inválidos.
+export function parseNumbers(input: string): {
+  valid: number[];
+  invalid: string[];
+} {
+  const valid: number[] = [];
+  const invalid: string[] = [];
+
+  for (const token of input.split(",")) {
+    const trimmed = token.trim();
+    if (trimmed === "") continue;
+    const n = Number(trimmed);
+    if (Number.isInteger(n) && n >= 0 && n <= 36) {
+      valid.push(n);
+    } else {
+      invalid.push(trimmed);
+    }
+  }
+
+  return { valid, invalid };
 }
 
 export const PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31];

@@ -4,6 +4,7 @@ import {
   deleteBetSession,
   listBetSessions,
 } from "../services/betSessions";
+import { errorMessage } from "../lib/errors";
 import type { BetSession } from "../types";
 
 export interface UseBetSessions {
@@ -58,7 +59,7 @@ export function useBetSessions(casinoId: string | null): UseBetSessions {
         await createBetSession(casinoId, sessionDate, lossesBeforeWin, notes);
         await reload();
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Error desconocido");
+        setError(errorMessage(e));
       }
     },
     [casinoId, reload],
@@ -71,7 +72,7 @@ export function useBetSessions(casinoId: string | null): UseBetSessions {
         await deleteBetSession(id);
         await reload();
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Error desconocido");
+        setError(errorMessage(e));
       }
     },
     [reload],

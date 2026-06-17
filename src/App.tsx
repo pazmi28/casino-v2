@@ -7,6 +7,7 @@ import { createCasino } from "./services/casinos";
 import { SpinHistory } from "./components/SpinHistory/SpinHistory";
 import { SearchPanel } from "./components/SearchPanel/SearchPanel";
 import { BetLog } from "./components/BetLog/BetLog";
+import { PatternManager } from "./components/PatternManager/PatternManager";
 
 export default function App() {
   const [city, setCity] = useState<City>(CITIES[0]);
@@ -107,6 +108,7 @@ export default function App() {
           />
           <SearchPanel spins={spins} />
           <BetLog casinoId={selectedId} />
+          <PatternManager casinoId={selectedId} />
         </>
       )}
     </div>

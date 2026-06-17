@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { addSpins, deleteSpin, listSpins } from "../services/spins";
+import { parseNumbers } from "../lib/roulette";
+import { errorMessage } from "../lib/errors";
 import type { Spin } from "../types";
 
 export interface AddResult {
@@ -14,24 +16,6 @@ export interface UseSpins {
   reload: () => Promise<void>;
   add: (numbers: string) => Promise<AddResult>;
   remove: (id: string) => Promise<void>;
-}
-
-function parseNumbers(input: string): { valid: number[]; invalid: string[] } {
-  const valid: number[] = [];
-  const invalid: string[] = [];
-
-  for (const token of input.split(",")) {
-    const trimmed = token.trim();
-    if (trimmed === "") continue;
-    const n = Number(trimmed);
-    if (Number.isInteger(n) && n >= 0 && n <= 36) {
-      valid.push(n);
-    } else {
-      invalid.push(trimmed);
-    }
-  }
-
-  return { valid, invalid };
 }
 
 export function useSpins(casinoId: string | null): UseSpins {
@@ -73,7 +57,7 @@ export function useSpins(casinoId: string | null): UseSpins {
         await reload();
         return { added: valid.length, invalid };
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Error desconocido");
+        setError(errorMessage(e));
         return { added: 0, invalid };
       }
     },
@@ -87,7 +71,7 @@ export function useSpins(casinoId: string | null): UseSpins {
         await deleteSpin(id);
         await reload();
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Error desconocido");
+        setError(errorMessage(e));
       }
     },
     [reload],

@@ -6,6 +6,7 @@ import { useSpins } from "./hooks/useSpins";
 import { createCasino } from "./services/casinos";
 import { SpinHistory } from "./components/SpinHistory/SpinHistory";
 import { SearchPanel } from "./components/SearchPanel/SearchPanel";
+import { BetLog } from "./components/BetLog/BetLog";
 
 export default function App() {
   const [city, setCity] = useState<City>(CITIES[0]);
@@ -105,6 +106,7 @@ export default function App() {
             remove={remove}
           />
           <SearchPanel spins={spins} />
+          <BetLog casinoId={selectedId} />
         </>
       )}
     </div>

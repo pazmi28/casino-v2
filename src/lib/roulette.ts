@@ -8,6 +8,47 @@ export const COLOR_MAP: Record<number, SpinColor> = {
   20: "N", 22: "N", 24: "N", 26: "N", 28: "N", 29: "N", 31: "N", 33: "N", 35: "N",
 };
 
+// Paleta única y viva para todas las vistas (tiradas, rueda, mesa).
+// Cualquier componente que pinte un número usa SIEMPRE esto: no se vuelve a
+// definir el mapeo de color en ningún sitio.
+export const COLOR_STYLE: Record<SpinColor, string> = {
+  R: "bg-red-600 text-white",
+  N: "bg-zinc-900 text-white",
+  V: "bg-green-700 text-white",
+};
+
+// Docena del número: 1 (1–12), 2 (13–24), 3 (25–36), null para el 0.
+export function dozenOf(n: number): 1 | 2 | 3 | null {
+  if (n === 0) return null;
+  if (n <= 12) return 1;
+  if (n <= 24) return 2;
+  return 3;
+}
+
+// Fila física de la mesa europea (las apuestas "2 to 1").
+// top: 3,6,9…36 · mid: 2,5,8…35 · bottom: 1,4,7…34 · null para el 0.
+export function tableRow(n: number): "top" | "mid" | "bottom" | null {
+  if (n === 0) return null;
+  if (n % 3 === 0) return "top";
+  if (n % 3 === 2) return "mid";
+  return "bottom";
+}
+
+// Par/impar. El 0 no es par a efectos de apuesta.
+export function isEven(n: number): boolean {
+  return n !== 0 && n % 2 === 0;
+}
+
+// Falta (1–18) frente a pasa (19–36).
+export function isLow(n: number): boolean {
+  return n >= 1 && n <= 18;
+}
+
+// Rojo según el mapeo estándar; false para el 0 (verde).
+export function isRed(n: number): boolean {
+  return COLOR_MAP[n] === "R";
+}
+
 export const PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31];
 
 export const ROULETTE_SEQUENCE = [

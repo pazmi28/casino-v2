@@ -122,13 +122,38 @@ VITE_SUPABASE_ANON_KEY=
   subió a `App.tsx` como instancia única compartida por `SpinHistory` y
   `SearchPanel`, de modo que la cuenta usa los spins ya cargados sin lanzar
   otra query.
+- [x] Paleta y helpers de mesa unificados en `lib/roulette.ts`: `COLOR_STYLE`
+  (R rojo-600 / N zinc-900 / V verde-700, única fuente; `SpinHistory` y
+  `WheelNeighbors` ya no definen su propio mapeo), más `dozenOf`, `tableRow`,
+  `isEven`, `isLow`, `isRed`. `WheelNeighbors` mide el contenedor real con
+  `useLayoutEffect`+`ResizeObserver` y calcula el diámetro de cada casilla por
+  la cuerda entre números (`2·r·sin(π/37)·0.88`), eliminando el solape.
+  Nueva vista `components/SearchPanel/TableLayout.tsx`: mesa europea en CSS
+  grid (0, 36 números, 2 to 1, docenas y apuestas sencillas) que resalta en
+  blanco la casilla exacta y en dorado todo lo que el número buscado cumple,
+  con `transition-all duration-300`. En `SearchPanel`, rueda y mesa van lado a
+  lado en un flex (`lg:flex-row`, apilados por debajo de 1024px): la rueda en
+  `w-full lg:w-[380px] flex-shrink-0` (ancho explícito imprescindible: sus
+  hijos son `position:absolute` y no aportan tamaño, sin ancho el wrapper
+  colapsaba a 0px) y la mesa en `flex-1 min-w-0 overflow-x-auto` (scroll
+  horizontal en pantallas estrechas). El texto "El X ha salido N veces" queda
+  encima del flex. Verificado en navegador: `clientWidth=380` (no 0) tanto en
+  ventana ancha como estrecha.
+- [x] Registro de sesiones de apuestas (arreglado el bug de la v1: el modal no
+  guardaba nada). `services/betSessions.ts` (listBetSessions ordenadas por
+  fecha desc / createBetSession / deleteBetSession), `hooks/useBetSessions.ts`
+  (sessions/loading/error/reload/add/remove, tipo de retorno completo) y
+  `components/BetLog/BetLog.tsx` (formulario con `<input type="date">` por
+  defecto hoy vía `toISOString().slice(0,10)`, número de pérdidas antes de
+  ganar, notas, botón Guardar; lista de sesiones con borrado y mensaje de
+  vacío). Se sustituyó el mecanismo de fechas pre-generadas de la v1 por un
+  selector de fecha normal. Integrado en `App.tsx` bajo `SearchPanel`.
 ### Pendiente
 - [ ] Crear proyecto en Supabase y ejecutar `schema.sql`
-- [~] Implementar `services/` y `hooks/` (hecho: casinos, spins; faltan
-  betSessions, patterns, combinations)
+- [~] Implementar `services/` y `hooks/` (hecho: casinos, spins, betSessions;
+  faltan patterns, combinations)
 - [~] Trocear `App.tsx` en los componentes de arriba (hecho: SpinHistory,
-  SearchPanel/WheelNeighbors; faltan el resto)
-- [ ] Arreglar el guardado real de `bet_sessions` (modal roto en v1)
+  SearchPanel/WheelNeighbors, BetLog; faltan el resto)
 - [ ] Implementar Gestor de patrones (global / por casino)
 - [ ] Cargar `number_combinations` desde el Excel cuando esté terminado
 - [ ] Decidir despliegue (Vercel recomendado por la metodología v5.2)

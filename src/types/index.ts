@@ -18,3 +18,12 @@ export interface Spin {
   color: SpinColor;
   created_at: string;
 }
+
+export interface BetSession {
+  id: string;
+  casino_id: string;
+  session_date: string; // "YYYY-MM-DD"
+  losses_before_win: number | null;
+  notes: string | null;
+  created_at: string;
+}

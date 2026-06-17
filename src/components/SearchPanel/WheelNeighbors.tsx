@@ -1,19 +1,6 @@
-import { COLOR_MAP, ROULETTE_SEQUENCE } from "../../lib/roulette";
+import { useLayoutEffect, useRef, useState } from "react";
+import { COLOR_MAP, COLOR_STYLE, ROULETTE_SEQUENCE } from "../../lib/roulette";
 import type { Spin } from "../../types";
-
-// Geometría del cilindro
-const SIZE = 320; // lado del contenedor (px)
-const CENTER = SIZE / 2;
-const RADIUS = 132; // radio de la circunferencia de números
-const CELL = 36; // diámetro de cada casilla (px)
-
-// Clases por color de ruleta (base de cada casilla, no el resaltado).
-// El mapeo número→color vive en lib/roulette.ts; aquí solo se traduce a estilo.
-const BASE_COLOR: Record<string, string> = {
-  R: "bg-red-700 text-white border-red-900",
-  N: "bg-gray-900 text-white border-black",
-  V: "bg-green-700 text-white border-green-900",
-};
 
 interface NeighborSets {
   primary: Set<number>; // ±11 posiciones
@@ -43,42 +30,67 @@ interface Props {
 }
 
 export function WheelNeighbors({ searched }: Props) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState(0);
+
+  // Medimos el lado real ya renderizado (lo decide el CSS: max-w + aspect-square)
+  // y derivamos el diámetro de cada casilla de ese tamaño, no de un % fijo.
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => setSize(el.clientWidth);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const { primary, secondary } =
     searched === null
       ? { primary: new Set<number>(), secondary: new Set<number>() }
       : neighborSets(searched);
 
+  const n = ROULETTE_SEQUENCE.length; // 37
+  const center = size / 2;
+  const radius = size * 0.44;
+  // Diámetro que evita el solape: cuerda entre casillas contiguas, con holgura.
+  const d = Math.max(20, 2 * radius * Math.sin(Math.PI / n) * 0.88);
+  const fontSize = d * 0.42;
+
   return (
     <div
-      className="relative mx-auto rounded-full bg-emerald-950"
-      style={{ width: SIZE, height: SIZE }}
+      ref={ref}
+      className="relative mx-auto w-full max-w-[380px] aspect-square rounded-full bg-emerald-950"
     >
-      {ROULETTE_SEQUENCE.map((num, i) => {
-        const angle = (i / ROULETTE_SEQUENCE.length) * 2 * Math.PI - Math.PI / 2;
-        const left = CENTER + RADIUS * Math.cos(angle) - CELL / 2;
-        const top = CENTER + RADIUS * Math.sin(angle) - CELL / 2;
+      {size > 0 &&
+        ROULETTE_SEQUENCE.map((num, i) => {
+          const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+          const left = center + radius * Math.cos(angle) - d / 2;
+          const top = center + radius * Math.sin(angle) - d / 2;
 
-        const isMain = searched !== null && num === searched;
-        const isPrimary = primary.has(num);
-        const isSecondary = secondary.has(num);
+          const isMain = searched !== null && num === searched;
+          const isPrimary = primary.has(num);
+          const isSecondary = secondary.has(num);
 
-        let highlight = BASE_COLOR[COLOR_MAP[num]] + " opacity-60";
-        if (isSecondary) highlight = "bg-amber-300 text-gray-900 border-amber-500";
-        if (isPrimary) highlight = "bg-orange-500 text-white border-orange-700";
-        if (isMain)
-          highlight =
-            "bg-yellow-300 text-gray-900 border-yellow-600 ring-2 ring-yellow-500 scale-125 z-10";
+          let highlight = `${COLOR_STYLE[COLOR_MAP[num]]} opacity-60 border-black/30`;
+          if (isSecondary)
+            highlight = "bg-amber-300 text-gray-900 border-amber-500";
+          if (isPrimary)
+            highlight = "bg-orange-500 text-white border-orange-700";
+          if (isMain)
+            highlight =
+              "bg-yellow-300 text-gray-900 border-yellow-600 ring-2 ring-yellow-500 scale-125 z-10";
 
-        return (
-          <div
-            key={num}
-            className={`absolute flex items-center justify-center rounded-full border text-sm font-bold transition-all duration-300 ${highlight}`}
-            style={{ width: CELL, height: CELL, left, top }}
-          >
-            {num}
-          </div>
-        );
-      })}
+          return (
+            <div
+              key={num}
+              className={`absolute flex items-center justify-center rounded-full border font-bold transition-all duration-300 ${highlight}`}
+              style={{ width: d, height: d, left, top, fontSize }}
+            >
+              {num}
+            </div>
+          );
+        })}
     </div>
   );
 }

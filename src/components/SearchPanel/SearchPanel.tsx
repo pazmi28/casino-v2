@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { WheelNeighbors } from "./WheelNeighbors";
+import { TableLayout } from "./TableLayout";
 import type { Spin } from "../../types";
 
 interface Props {
@@ -56,7 +57,14 @@ export function SearchPanel({ spins }: Props) {
         </p>
       )}
 
-      <WheelNeighbors searched={searched} spins={spins} />
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        <div className="w-full lg:w-[380px] flex-shrink-0">
+          <WheelNeighbors searched={searched} spins={spins} />
+        </div>
+        <div className="flex-1 min-w-0 overflow-x-auto">
+          <TableLayout searched={searched} />
+        </div>
+      </div>
     </div>
   );
 }

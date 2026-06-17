@@ -1,15 +1,8 @@
 import { useState } from "react";
 import type { AddResult } from "../../hooks/useSpins";
+import { COLOR_STYLE } from "../../lib/roulette";
 import type { SpinColor } from "../../lib/roulette";
 import type { Spin } from "../../types";
-
-// Estilos visuales por color. El valor de `color` (R/N/V) viene ya calculado
-// desde Postgres; aquí solo se traduce a clases de Tailwind, no se recalcula.
-const COLOR_STYLE: Record<SpinColor, string> = {
-  R: "bg-red-600 text-white",
-  N: "bg-gray-900 text-white",
-  V: "bg-green-600 text-white",
-};
 
 const COLOR_LABEL: Record<SpinColor, string> = {
   R: "Rojo",

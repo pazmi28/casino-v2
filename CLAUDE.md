@@ -108,10 +108,17 @@ VITE_SUPABASE_ANON_KEY=
 ## Estado actual
 ### Completado
 - [x] Análisis y modelo de datos validado (este documento + schema.sql)
+- [x] Registro de tiradas: `services/spins.ts` (listSpins / addSpins /
+  deleteSpin), `hooks/useSpins.ts` (loading/error/reload + add con parseo y
+  validación 0–36) y `components/SpinHistory/SpinHistory.tsx` (input +
+  línea de tiempo con número/color/hora), integrado en `App.tsx` al
+  seleccionar casino. El color se usa tal cual viene de Postgres.
 ### Pendiente
 - [ ] Crear proyecto en Supabase y ejecutar `schema.sql`
-- [ ] Implementar `services/` y `hooks/`
-- [ ] Trocear `App.tsx` en los componentes de arriba
+- [~] Implementar `services/` y `hooks/` (hecho: casinos, spins; faltan
+  betSessions, patterns, combinations)
+- [~] Trocear `App.tsx` en los componentes de arriba (hecho: SpinHistory;
+  faltan el resto)
 - [ ] Arreglar el guardado real de `bet_sessions` (modal roto en v1)
 - [ ] Implementar Gestor de patrones (global / por casino)
 - [ ] Cargar `number_combinations` desde el Excel cuando esté terminado

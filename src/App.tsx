@@ -3,10 +3,12 @@ import { CITIES } from "./types";
 import type { City } from "./types";
 import { useCasinos } from "./hooks/useCasinos";
 import { createCasino } from "./services/casinos";
+import { SpinHistory } from "./components/SpinHistory/SpinHistory";
 
 export default function App() {
   const [city, setCity] = useState<City>(CITIES[0]);
   const [newName, setNewName] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const { casinos, loading, error, reload } = useCasinos(city);
 
   const handleAdd = async () => {
@@ -14,6 +16,11 @@ export default function App() {
     await createCasino(city, newName.trim());
     setNewName("");
     reload();
+  };
+
+  const handleSelectCity = (next: City) => {
+    setCity(next);
+    setSelectedId(null);
   };
 
   return (
@@ -29,7 +36,7 @@ export default function App() {
         <select
           className="p-2 border rounded"
           value={city}
-          onChange={(e) => setCity(e.target.value as City)}
+          onChange={(e) => handleSelectCity(e.target.value as City)}
         >
           {CITIES.map((c) => (
             <option key={c} value={c}>
@@ -64,14 +71,25 @@ export default function App() {
 
       <ul className="space-y-1">
         {casinos.map((c) => (
-          <li key={c.id} className="p-2 border rounded bg-white">
-            {c.name}
+          <li key={c.id}>
+            <button
+              onClick={() => setSelectedId(c.id)}
+              className={`w-full text-left p-2 border rounded ${
+                selectedId === c.id
+                  ? "bg-blue-100 border-blue-400"
+                  : "bg-white hover:bg-gray-50"
+              }`}
+            >
+              {c.name}
+            </button>
           </li>
         ))}
         {!loading && !error && casinos.length === 0 && (
           <li className="text-gray-500">No hay casinos en {city} todavía.</li>
         )}
       </ul>
+
+      {selectedId && <SpinHistory casinoId={selectedId} />}
     </div>
   );
 }

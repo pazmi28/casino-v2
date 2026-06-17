@@ -2,14 +2,20 @@ import { useState } from "react";
 import { CITIES } from "./types";
 import type { City } from "./types";
 import { useCasinos } from "./hooks/useCasinos";
+import { useSpins } from "./hooks/useSpins";
 import { createCasino } from "./services/casinos";
 import { SpinHistory } from "./components/SpinHistory/SpinHistory";
+import { SearchPanel } from "./components/SearchPanel/SearchPanel";
 
 export default function App() {
   const [city, setCity] = useState<City>(CITIES[0]);
   const [newName, setNewName] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const { casinos, loading, error, reload } = useCasinos(city);
+  // Una sola instancia de useSpins compartida por SpinHistory y SearchPanel,
+  // para no lanzar dos queries del mismo casino.
+  const { spins, loading: spinsLoading, error: spinsError, add, remove } =
+    useSpins(selectedId);
 
   const handleAdd = async () => {
     if (!newName.trim()) return;
@@ -89,7 +95,18 @@ export default function App() {
         )}
       </ul>
 
-      {selectedId && <SpinHistory casinoId={selectedId} />}
+      {selectedId && (
+        <>
+          <SpinHistory
+            spins={spins}
+            loading={spinsLoading}
+            error={spinsError}
+            add={add}
+            remove={remove}
+          />
+          <SearchPanel spins={spins} />
+        </>
+      )}
     </div>
   );
 }

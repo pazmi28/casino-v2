@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useSpins } from "../../hooks/useSpins";
+import type { AddResult } from "../../hooks/useSpins";
 import type { SpinColor } from "../../lib/roulette";
+import type { Spin } from "../../types";
 
 // Estilos visuales por color. El valor de `color` (R/N/V) viene ya calculado
 // desde Postgres; aquí solo se traduce a clases de Tailwind, no se recalcula.
@@ -24,11 +25,14 @@ function formatTime(iso: string): string {
 }
 
 interface Props {
-  casinoId: string;
+  spins: Spin[];
+  loading: boolean;
+  error: string | null;
+  add: (numbers: string) => Promise<AddResult>;
+  remove: (id: string) => Promise<void>;
 }
 
-export function SpinHistory({ casinoId }: Props) {
-  const { spins, loading, error, add, remove } = useSpins(casinoId);
+export function SpinHistory({ spins, loading, error, add, remove }: Props) {
   const [input, setInput] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
 

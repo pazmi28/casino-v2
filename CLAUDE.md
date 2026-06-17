@@ -113,12 +113,21 @@ VITE_SUPABASE_ANON_KEY=
   validación 0–36) y `components/SpinHistory/SpinHistory.tsx` (input +
   línea de tiempo con número/color/hora), integrado en `App.tsx` al
   seleccionar casino. El color se usa tal cual viene de Postgres.
+- [x] Búsqueda con vecinos en rueda:
+  `components/SearchPanel/WheelNeighbors.tsx` (dibuja los 37 números en
+  círculo por ángulo usando `ROULETTE_SEQUENCE`; resalta el buscado, sus 2
+  vecinos físicos a ±11 y los 4 secundarios a ±10/±12, con
+  `transition-all duration-300`) y `components/SearchPanel/SearchPanel.tsx`
+  (input + botón Buscar + cuenta de apariciones del número). `useSpins` se
+  subió a `App.tsx` como instancia única compartida por `SpinHistory` y
+  `SearchPanel`, de modo que la cuenta usa los spins ya cargados sin lanzar
+  otra query.
 ### Pendiente
 - [ ] Crear proyecto en Supabase y ejecutar `schema.sql`
 - [~] Implementar `services/` y `hooks/` (hecho: casinos, spins; faltan
   betSessions, patterns, combinations)
-- [~] Trocear `App.tsx` en los componentes de arriba (hecho: SpinHistory;
-  faltan el resto)
+- [~] Trocear `App.tsx` en los componentes de arriba (hecho: SpinHistory,
+  SearchPanel/WheelNeighbors; faltan el resto)
 - [ ] Arreglar el guardado real de `bet_sessions` (modal roto en v1)
 - [ ] Implementar Gestor de patrones (global / por casino)
 - [ ] Cargar `number_combinations` desde el Excel cuando esté terminado

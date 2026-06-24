@@ -26,10 +26,12 @@ interface OptionStat {
 }
 
 interface SectionStats {
-  total: number; // tiradas distintas de 0
+  total: number; // tiradas distintas de 0 (denominador de dozen/column/range)
+  colorTotal: number; // TODAS las tiradas, el 0 (verde) incluido
   dozen: OptionStat[];
   column: OptionStat[];
   range: OptionStat[];
+  color: OptionStat[];
 }
 
 // Estadística de secciones sobre TODO el historial (ignora el alcance) y
@@ -53,8 +55,24 @@ function buildSectionStats(spins: Spin[]): SectionStats {
     else high++;
   }
 
+  // Color: a diferencia de las otras 3, el 0 (Verde) SÍ cuenta. Recorrido
+  // aparte y denominador propio (spins.length) para no mezclar exclusiones.
+  const colorTotal = spins.length;
+  const colorPct = (c: number) =>
+    colorTotal > 0 ? Math.round((c / colorTotal) * 100) : 0;
+  let red = 0;
+  let black = 0;
+  let green = 0;
+  for (const s of spins) {
+    const col = COLOR_MAP[s.number];
+    if (col === "R") red++;
+    else if (col === "N") black++;
+    else green++;
+  }
+
   return {
     total,
+    colorTotal,
     dozen: [1, 2, 3].map((d) => ({
       key: String(d),
       label: `${d}ª docena`,
@@ -70,6 +88,11 @@ function buildSectionStats(spins: Spin[]): SectionStats {
     range: [
       { key: "low", label: "1–18", count: low, pct: pct(low) },
       { key: "high", label: "19–36", count: high, pct: pct(high) },
+    ],
+    color: [
+      { key: "R", label: "Rojo", count: red, pct: colorPct(red) },
+      { key: "N", label: "Negro", count: black, pct: colorPct(black) },
+      { key: "V", label: "Verde", count: green, pct: colorPct(green) },
     ],
   };
 }
@@ -190,6 +213,7 @@ export function NeighborStats({ searched, spins }: Props) {
   const dozenTop = topIndex(sectionStats.dozen);
   const columnTop = topIndex(sectionStats.column);
   const rangeTop = topIndex(sectionStats.range);
+  const colorTop = topIndex(sectionStats.color);
 
   return (
     <div className="mt-6 space-y-4">
@@ -303,7 +327,7 @@ export function NeighborStats({ searched, spins }: Props) {
             No hay tiradas (sin contar el 0) para calcular secciones.
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <div className="text-xs text-gray-500 mb-1">Docena</div>
               {sectionStats.dozen.map((o, i) => (
@@ -340,6 +364,19 @@ export function NeighborStats({ searched, spins }: Props) {
                   pct={o.pct}
                   badge={i === rangeTop ? "Más frecuente" : undefined}
                   title={`"${o.label}": ${o.count} de ${sectionStats.total} tiradas registradas (excluyendo el 0) = ${o.pct}%.`}
+                />
+              ))}
+            </div>
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Color</div>
+              {sectionStats.color.map((o, i) => (
+                <StatBar
+                  key={o.key}
+                  label={o.label}
+                  count={o.count}
+                  pct={o.pct}
+                  badge={i === colorTop ? "Más frecuente" : undefined}
+                  title={`"${o.label}": ${o.count} de ${sectionStats.colorTotal} tiradas registradas (incluido el 0) = ${o.pct}%.`}
                 />
               ))}
             </div>

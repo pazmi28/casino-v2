@@ -201,7 +201,13 @@ VITE_SUPABASE_ANON_KEY=
   con resultado calculado (las 2 tarjetas de vecino, las 3 de apuesta y todas
   las barras de sección, no solo los que llevan badge) tiene un `title` nativo
   con el desglose exacto (count/total/pct y alcance) reutilizando los valores
-  ya mostrados, para poder comparar al pasar el ratón.
+  ya mostrados, para poder comparar al pasar el ratón. 4ª fila "Color"
+  (Rojo/Negro/Verde vía `COLOR_MAP`) en "Sección más frecuente": a diferencia
+  de Docena/Rango/Columna, el 0 SÍ cuenta (como Verde) y su denominador es
+  `spins.length` completo (`colorTotal`), no el `total` sin ceros — se calcula
+  en un recorrido aparte dentro del mismo `buildSectionStats`. La rejilla pasó
+  a `sm:grid-cols-2` para que Color quede bajo Columna; su `title` dice
+  "(incluido el 0)".
 ### Pendiente
 - [ ] Crear proyecto en Supabase y ejecutar `schema.sql`
 - [~] Implementar `services/` y `hooks/` (hecho: casinos, spins, betSessions,

@@ -42,6 +42,20 @@ export function columnOf(n: number): 1 | 2 | 3 | null {
   return m === 1 ? 1 : m === 2 ? 2 : 3;
 }
 
+// Vecinos físicos en el cilindro a ±11 posiciones (la base del resaltado de
+// la rueda y de la estadística de vecinos). Fuente única: no recalcular
+// rightIdx/leftIdx en los componentes.
+export function getNeighbors(n: number): { left: number; right: number } {
+  const idx = ROULETTE_SEQUENCE.indexOf(n);
+  const total = ROULETTE_SEQUENCE.length;
+  const rightIdx = (idx + 11) % total;
+  const leftIdx = (idx - 11 + total) % total;
+  return {
+    left: ROULETTE_SEQUENCE[leftIdx],
+    right: ROULETTE_SEQUENCE[rightIdx],
+  };
+}
+
 // Par/impar. El 0 no es par a efectos de apuesta.
 export function isEven(n: number): boolean {
   return n !== 0 && n % 2 === 0;

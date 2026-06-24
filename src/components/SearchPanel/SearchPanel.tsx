@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { WheelNeighbors } from "./WheelNeighbors";
 import { TableLayout } from "./TableLayout";
+import { NeighborStats } from "./NeighborStats";
 import type { Spin } from "../../types";
 
 interface Props {
@@ -65,6 +66,8 @@ export function SearchPanel({ spins }: Props) {
           <TableLayout searched={searched} />
         </div>
       </div>
+
+      <NeighborStats searched={searched} spins={spins} />
     </div>
   );
 }

@@ -182,6 +182,26 @@ VITE_SUPABASE_ANON_KEY=
   de cada círculo (orden fijo Docena→Rango→Par/Impar→Columna), formateada con
   `dozenOf`/`isLow`/`isEven`/`columnOf`; la línea de círculos no se filtra ni
   cambia. Estado en un `useState` local, sin persistir.
+- [x] Estadística de vecinos en `SearchPanel` (debajo de la fila Rueda+Mesa).
+  Nuevo helper `getNeighbors(n)` en `lib/roulette.ts` (vecinos físicos a ±11);
+  `WheelNeighbors` lo usa para el resaltado primario en vez de calcular
+  `rightIdx/leftIdx` por su cuenta (pinta igual). Nuevo
+  `components/SearchPanel/NeighborStats.tsx` (props `searched` + `spins`, sin
+  query nueva) con tres bloques en orden: (1) Vecino más probable — selector de
+  alcance EXCLUYENTE (Todo / Últimas 10/20/30, por defecto Todo) que cuenta las
+  apariciones de `getNeighbors(searched).left/right` en el subconjunto; badge
+  "Más probable" al de más cuenta, "Empate" si igualan, y "Sin datos
+  suficientes…" si suman 0 (en ese caso no se renderiza el bloque 2). (2)
+  Próxima apuesta posible — toma el ganador del bloque 1 y muestra su
+  docena/columna/rango buscando el % en `sectionStats` (no recalcula), con
+  "Mejor cobertura" en el mayor %. (3) Sección más frecuente — SIEMPRE sobre
+  todo el historial (ignora el alcance) y excluyendo el 0, % de cada docena/
+  columna/rango con barras y badge "Más frecuente". `sectionStats` se calcula
+  una vez (`useMemo` sobre spins) y lo reusan los bloques 2 y 3. Cada elemento
+  con resultado calculado (las 2 tarjetas de vecino, las 3 de apuesta y todas
+  las barras de sección, no solo los que llevan badge) tiene un `title` nativo
+  con el desglose exacto (count/total/pct y alcance) reutilizando los valores
+  ya mostrados, para poder comparar al pasar el ratón.
 ### Pendiente
 - [ ] Crear proyecto en Supabase y ejecutar `schema.sql`
 - [~] Implementar `services/` y `hooks/` (hecho: casinos, spins, betSessions,

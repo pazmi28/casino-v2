@@ -1,5 +1,10 @@
 import { useLayoutEffect, useRef, useState } from "react";
-import { COLOR_MAP, COLOR_STYLE, ROULETTE_SEQUENCE } from "../../lib/roulette";
+import {
+  COLOR_MAP,
+  COLOR_STYLE,
+  getNeighbors,
+  ROULETTE_SEQUENCE,
+} from "../../lib/roulette";
 import type { Spin } from "../../types";
 
 interface NeighborSets {
@@ -14,9 +19,12 @@ function neighborSets(searched: number): NeighborSets {
   if (idx === -1) {
     return { primary: new Set(), secondary: new Set() };
   }
+  // El ±11 (vecinos físicos) sale del helper único; el ±10/±12 secundario es
+  // la adyacencia visual de esos vecinos en la rueda.
+  const { left, right } = getNeighbors(searched);
   const at = (offset: number) => seq[(idx + offset + n * 2) % n];
   return {
-    primary: new Set([at(11), at(-11)]),
+    primary: new Set([left, right]),
     secondary: new Set([at(10), at(12), at(-10), at(-12)]),
   };
 }

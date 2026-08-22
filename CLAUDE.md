@@ -80,7 +80,13 @@ autenticación, basta con cambiar las políticas de `anon` a `authenticated`.
   en rueda". Muestra, sobre las últimas 10 tiradas, la docena (1ª/2ª/3ª,
   "cuadrante" en la jerga del usuario) más frecuente ("caliente") y la menos
   frecuente ("fría"). Es descriptivo, no una predicción real: cada tirada de
-  ruleta física es independiente de las anteriores.
+  ruleta física es independiente de las anteriores. Un tercer bloque, "Sesgo
+  histórico", analiza TODO el historial del casino (no la ventana de 10) con
+  un test chi-cuadrado de bondad de ajuste: compara el % observado de cada
+  docena contra el 33.3% esperado por azar y marca "Sesgo probable"/"muy
+  probable" si la desviación es estadísticamente significativa (p<0.05 o
+  p<0.01) — la única fuente real de ventaja posible es un defecto físico de
+  la rueda/mesa, nunca el orden de las tiradas.
 - **Vecinos en rueda**: dado un número buscado, resalta su posición física
   ±11 puestos y los 2 vecinos consecutivos a cada lado de esas posiciones.
   Es navegación visual sobre la secuencia fija de la rueda, no aleatorio.
@@ -243,6 +249,34 @@ VITE_SUPABASE_ANON_KEY=
   con base real: cada tirada es independiente. Verificado en navegador con
   datos reales de un casino existente (17 tiradas): calcula bien sobre las
   últimas 10 y marca correctamente caliente/fría.
+- [x] Bloque "Sesgo histórico" en `QuadrantPrediction.tsx`, bajo el grid de
+  docena caliente/fría, sobre TODO el historial del casino (no la ventana de
+  10). Chi-cuadrado de bondad de ajuste con 2 grados de libertad (3
+  docenas); como chi²(2 g.l.) es exactamente una exponencial de tasa 1/2, el
+  p-valor sale con forma cerrada (`Math.exp(-chi2/2)`), sin librería de
+  estadística. Umbral mínimo de 30 tiradas sin contar el 0 antes de mostrar
+  veredicto (si no, aviso de "faltan tiradas"); veredictos por p-valor:
+  <0.01 "Sesgo muy probable", <0.05 "Sesgo probable" (ambos en rojo), <0.10
+  "Posible sesgo (a vigilar)" (ámbar), si no "Sin sesgo detectable" (gris).
+  Verificado con un casino de prueba desechable (33 tiradas cargadas a
+  mano, sesgadas a propósito hacia la 3ª docena): salió chi²=16.55, p≈0.000,
+  "Sesgo muy probable", marcando la 3ª docena "Por encima de lo esperado" —
+  cálculo correcto.
+- [x] Borrado de casino (antes no existía en la UI pese a que este documento
+  ya lo daba por hecho). Nuevo `deleteCasino()` en `services/casinos.ts`
+  (`DELETE` sobre `casinos`, se apoya en el `ON DELETE CASCADE` de
+  `spins`/`patterns` y el `ON DELETE SET NULL` de `bet_sessions` ya
+  definidos en `schema.sql`, no hace falta borrar hijos a mano), `remove` en
+  `useCasinos.ts` (mismo patrón que `usePatterns.add`: devuelve
+  `string | null`, no escribe el `error` del hook) y en `App.tsx` un botón
+  "×" junto a cada casino de la lista que pide `window.confirm(...)`
+  explicando el borrado en cascada antes de llamar a `remove`; si el casino
+  borrado era el seleccionado, `selectedId` vuelve a `null`. Motivo: durante
+  una sesión de pruebas con el navegador se pulsó por error el botón
+  "Eliminar" de `PatternManager` (el único "Eliminar" que existía en la app)
+  creyendo que borraba el casino de prueba, y en su lugar borró un patrón
+  real del usuario sin forma de recuperarlo. Se implementó esta función
+  para que no vuelva a hacer falta ese tipo de atajo.
 ### Pendiente
 - [~] Tooltip propio (hover + tap móvil) en `NeighborStats`. Creado
   `components/SearchPanel/InfoTooltip.tsx` (props `text`+`children`; abre en

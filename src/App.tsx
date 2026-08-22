@@ -14,7 +14,9 @@ export default function App() {
   const [city, setCity] = useState<City>(CITIES[0]);
   const [newName, setNewName] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const { casinos, loading, error, reload } = useCasinos(city);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const { casinos, loading, error, reload, remove: removeCasino } =
+    useCasinos(city);
   // Una sola instancia de useSpins compartida por SpinHistory y SearchPanel,
   // para no lanzar dos queries del mismo casino.
   const { spins, loading: spinsLoading, error: spinsError, add, remove } =
@@ -30,6 +32,21 @@ export default function App() {
   const handleSelectCity = (next: City) => {
     setCity(next);
     setSelectedId(null);
+  };
+
+  const handleDeleteCasino = async (c: { id: string; name: string }) => {
+    const confirmed = window.confirm(
+      `¿Borrar "${c.name}"? Se eliminarán también sus tiradas y sus patrones ligados a este casino (no se puede deshacer).`,
+    );
+    if (!confirmed) return;
+
+    setDeleteError(null);
+    const err = await removeCasino(c.id);
+    if (err) {
+      setDeleteError(err);
+      return;
+    }
+    if (selectedId === c.id) setSelectedId(null);
   };
 
   return (
@@ -78,18 +95,29 @@ export default function App() {
         </p>
       )}
 
+      {deleteError && (
+        <p className="text-red-600 mb-2">Error al borrar: {deleteError}</p>
+      )}
+
       <ul className="space-y-1">
         {casinos.map((c) => (
-          <li key={c.id}>
+          <li key={c.id} className="flex gap-1">
             <button
               onClick={() => setSelectedId(c.id)}
-              className={`w-full text-left p-2 border rounded ${
+              className={`flex-1 text-left p-2 border rounded ${
                 selectedId === c.id
                   ? "bg-blue-100 border-blue-400"
                   : "bg-white hover:bg-gray-50"
               }`}
             >
               {c.name}
+            </button>
+            <button
+              onClick={() => handleDeleteCasino(c)}
+              className="px-2 border rounded text-red-600 bg-white hover:bg-red-50"
+              title={`Borrar ${c.name}`}
+            >
+              ×
             </button>
           </li>
         ))}

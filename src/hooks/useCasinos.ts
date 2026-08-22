@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { listCasinos } from "../services/casinos";
+import { deleteCasino, listCasinos } from "../services/casinos";
 import { errorMessage } from "../lib/errors";
 import type { Casino, City } from "../types";
 
@@ -25,5 +25,20 @@ export function useCasinos(city: City) {
     reload();
   }, [reload]);
 
-  return { casinos, loading, error, reload };
+  // Devuelve null si fue bien, o el mensaje de error si falló (mismo patrón
+  // que usePatterns.add: el componente decide cómo mostrarlo).
+  const remove = useCallback(
+    async (id: string): Promise<string | null> => {
+      try {
+        await deleteCasino(id);
+        await reload();
+        return null;
+      } catch (e) {
+        return errorMessage(e);
+      }
+    },
+    [reload],
+  );
+
+  return { casinos, loading, error, reload, remove };
 }

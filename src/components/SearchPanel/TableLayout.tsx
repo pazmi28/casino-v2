@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import {
   COLOR_MAP,
   COLOR_STYLE,
+  columnOf,
   dozenOf,
   isEven,
   isLow,
@@ -73,20 +74,26 @@ export function TableLayout({ searched }: Props) {
           </div>
         ))}
 
-        {/* Columna "2 to 1", una por fila física */}
-        {(["top", "mid", "bottom"] as const).map((r, i) => (
-          <div
-            key={r}
-            className={CELL_BASE}
-            style={{
-              gridColumn: 14,
-              gridRow: i + 1,
-              ...outline(false, has && tableRow(searched!) === r),
-            }}
-          >
-            2 to 1
-          </div>
-        ))}
+        {/* Columna "2 to 1" (column bet), una por fila física. La etiqueta
+            "Col N" sale de columnOf() con un número representativo de la fila:
+            top→3, mid→2, bottom→1. */}
+        {(["top", "mid", "bottom"] as const).map((r, i) => {
+          const rep = r === "top" ? 3 : r === "mid" ? 2 : 1;
+          return (
+            <div
+              key={r}
+              className={`${CELL_BASE} flex-col leading-none`}
+              style={{
+                gridColumn: 14,
+                gridRow: i + 1,
+                ...outline(false, has && tableRow(searched!) === r),
+              }}
+            >
+              <span className="text-xs font-bold">Col {columnOf(rep)}</span>
+              <span className="text-[9px] opacity-80">2 a 1</span>
+            </div>
+          );
+        })}
 
         {/* Fila 4: docenas, cada una abarca 4 columnas de números */}
         {([1, 2, 3] as const).map((d, i) => (

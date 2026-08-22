@@ -62,7 +62,11 @@ export function SearchPanel({ spins }: Props) {
         <div className="w-full lg:w-[380px] flex-shrink-0">
           <WheelNeighbors searched={searched} spins={spins} />
         </div>
-        <div className="flex-1 min-w-0 overflow-x-auto">
+        {/* w-full en móvil (apilado): el contenedor flex usa items-start, así
+            que en column el cross-axis no estira este hijo; sin un ancho
+            definido crecería hasta los 560px de la mesa y desbordaría. En lg
+            vuelve a mandar flex-1. */}
+        <div className="w-full lg:w-auto flex-1 min-w-0 overflow-x-auto">
           <TableLayout searched={searched} />
         </div>
       </div>

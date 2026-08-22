@@ -76,6 +76,11 @@ autenticación, basta con cambiar las políticas de `anon` a `authenticated`.
   en cascada vía FK, ya no hace falta el batch manual de Firestore)
 - **Historial de tiradas**: entrada manual de números (0-36), color
   auto-inferido desde `lib/roulette.ts`
+- **Predicción Cuadrantes** (nuevo): entre "Historial de tiradas" y "Vecinos
+  en rueda". Muestra, sobre las últimas 10 tiradas, la docena (1ª/2ª/3ª,
+  "cuadrante" en la jerga del usuario) más frecuente ("caliente") y la menos
+  frecuente ("fría"). Es descriptivo, no una predicción real: cada tirada de
+  ruleta física es independiente de las anteriores.
 - **Vecinos en rueda**: dado un número buscado, resalta su posición física
   ±11 puestos y los 2 vecinos consecutivos a cada lado de esas posiciones.
   Es navegación visual sobre la secuencia fija de la rueda, no aleatorio.
@@ -208,7 +213,45 @@ VITE_SUPABASE_ANON_KEY=
   en un recorrido aparte dentro del mismo `buildSectionStats`. La rejilla pasó
   a `sm:grid-cols-2` para que Color quede bajo Columna; su `title` dice
   "(incluido el 0)".
+- [x] Etiquetas "Col N" en la mesa (`TableLayout.tsx`): las 3 casillas del
+  column bet 2-a-1, antes todas "2 to 1" e indistinguibles, ahora muestran
+  "Col 1/2/3" derivado de `columnOf()` con un número representativo por fila
+  (top→3, mid→2, bottom→1), apilado con un "2 a 1" pequeño debajo
+  (`flex-col leading-none`). Se mantiene la terminología "Columna" (estándar de
+  ruleta), no se renombra a "Fila". `NeighborStats` no se tocó (ahí ya se ve
+  "Columna 1/2/3" completo).
+- [x] Fix de desborde horizontal de la mesa en móvil (`SearchPanel.tsx`).
+  Diagnóstico medido a 390px: el contenedor flex usa `items-start`, así que en
+  el layout apilado (column) el cross-axis NO estira el wrapper de la mesa, y
+  `flex-1` solo dimensiona el eje vertical; sin ancho definido el wrapper crecía
+  hasta los 560px de la mesa (`flexChild` medía 560 con el body a 375) y
+  desbordaba —el `overflow-x-auto` no tenía nada que recortar—. Arreglado
+  dándole ancho explícito en apilado: `w-full lg:w-auto` en ese wrapper (en
+  `lg` vuelve a mandar `flex-1`). Compila limpio; falta re-verificar en
+  navegador a 390px (la sesión se cortó antes de esa comprobación).
+- [x] Nueva sección "Predicción Cuadrantes" en `App.tsx`, entre
+  `SpinHistory` y `SearchPanel`. Nuevo
+  `components/QuadrantPrediction/QuadrantPrediction.tsx` (props solo
+  `spins`, sin query nueva): toma `spins.slice(-10)`, cuenta por docena vía
+  `dozenOf()` (0 excluido, igual que `sectionStats` de `NeighborStats`) y
+  muestra dos tarjetas — "Docena caliente" (badge "Más probable" en la de
+  más apariciones) y "Docena fría" (badge "Menos probable" en la de menos),
+  con "Empate" si hay dos igualadas o un aviso si las 3 empatan; con menos
+  de 10 tiradas registradas usa las que haya y lo indica en el texto
+  ("últimas N tiradas, aún no hay 10 registradas"). Es una estadística
+  descriptiva (docena con más/menos incidencia reciente), NO una predicción
+  con base real: cada tirada es independiente. Verificado en navegador con
+  datos reales de un casino existente (17 tiradas): calcula bien sobre las
+  últimas 10 y marca correctamente caliente/fría.
 ### Pendiente
+- [~] Tooltip propio (hover + tap móvil) en `NeighborStats`. Creado
+  `components/SearchPanel/InfoTooltip.tsx` (props `text`+`children`; abre en
+  `group-hover` en escritorio y con `onClick` en táctil; cierra al clic fuera
+  vía listener en `document` con cleanup) PERO todavía NO cableado: los
+  desgloses de `NeighborStats.tsx` siguen usando el atributo `title` nativo
+  (que no se abre con tap). Falta sustituir cada `title={...}` por
+  `<InfoTooltip text={...}>…</InfoTooltip>` sin cambiar el texto, y verificar
+  tap en móvil + hover en escritorio.
 - [ ] Crear proyecto en Supabase y ejecutar `schema.sql`
 - [~] Implementar `services/` y `hooks/` (hecho: casinos, spins, betSessions,
   patterns; falta combinations)

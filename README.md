@@ -33,7 +33,9 @@ pendientes) y `schema.sql` para el DDL de la base de datos.
 
 ## Estado
 
-Esqueleto mínimo: lista y crea casinos contra Supabase, sirve para validar
-que la cadena completa (Supabase → build → GitHub → Vercel) funciona antes
-de migrar el resto de funcionalidades de la v1. Ver la sección "Pendiente"
-de `CLAUDE.md` para lo que falta.
+Funcional: gestión de casinos, registro de tiradas, búsqueda con vecinos en
+rueda + mesa europea, estadística de vecinos/apuesta sugerida/secciones,
+registro de sesiones de apuestas y gestor de patrones, todo contra Supabase.
+Pendiente principal: cargar `number_combinations` desde el Excel, terminar de
+cablear el tooltip propio de `NeighborStats` y decidir el despliegue. Ver la
+sección "Estado actual" de `CLAUDE.md` para el detalle y lo que falta.

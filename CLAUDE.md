@@ -76,11 +76,17 @@ autenticación, basta con cambiar las políticas de `anon` a `authenticated`.
   en cascada vía FK, ya no hace falta el batch manual de Firestore)
 - **Historial de tiradas**: entrada manual de números (0-36), color
   auto-inferido desde `lib/roulette.ts`
-- **Predicción Cuadrantes** (nuevo): entre "Historial de tiradas" y "Vecinos
+- **Predicción Decenas** (nuevo; `components/DozenPrediction/DozenPrediction.tsx`,
+  antes `QuadrantPrediction` — renombrado archivo y componente para que
+  coincida con el título): entre "Historial de tiradas" y "Vecinos
   en rueda". Muestra, sobre las últimas 10 tiradas, la docena (1ª/2ª/3ª,
   "cuadrante" en la jerga del usuario) más frecuente ("caliente") y la menos
   frecuente ("fría"). Es descriptivo, no una predicción real: cada tirada de
-  ruleta física es independiente de las anteriores. Un tercer bloque, "Sesgo
+  ruleta física es independiente de las anteriores. Un segundo bloque,
+  "Precisión histórica del aviso", hace un backtest en cliente (sin
+  persistir nada) recorriendo el historial en orden para medir con qué % ha
+  acertado ese aviso de docena caliente en el pasado, frente al 33.3%
+  esperado por azar. Un tercer bloque, "Sesgo
   histórico", analiza TODO el historial del casino (no la ventana de 10) con
   un test chi-cuadrado de bondad de ajuste: compara el % observado de cada
   docena contra el 33.3% esperado por azar y marca "Sesgo probable"/"muy
@@ -235,9 +241,9 @@ VITE_SUPABASE_ANON_KEY=
   dándole ancho explícito en apilado: `w-full lg:w-auto` en ese wrapper (en
   `lg` vuelve a mandar `flex-1`). Compila limpio; falta re-verificar en
   navegador a 390px (la sesión se cortó antes de esa comprobación).
-- [x] Nueva sección "Predicción Cuadrantes" en `App.tsx`, entre
+- [x] Nueva sección "Predicción Decenas" en `App.tsx`, entre
   `SpinHistory` y `SearchPanel`. Nuevo
-  `components/QuadrantPrediction/QuadrantPrediction.tsx` (props solo
+  `components/DozenPrediction/DozenPrediction.tsx` (props solo
   `spins`, sin query nueva): toma `spins.slice(-10)`, cuenta por docena vía
   `dozenOf()` (0 excluido, igual que `sectionStats` de `NeighborStats`) y
   muestra dos tarjetas — "Docena caliente" (badge "Más probable" en la de
@@ -249,7 +255,7 @@ VITE_SUPABASE_ANON_KEY=
   con base real: cada tirada es independiente. Verificado en navegador con
   datos reales de un casino existente (17 tiradas): calcula bien sobre las
   últimas 10 y marca correctamente caliente/fría.
-- [x] Bloque "Sesgo histórico" en `QuadrantPrediction.tsx`, bajo el grid de
+- [x] Bloque "Sesgo histórico" en `DozenPrediction.tsx`, bajo el grid de
   docena caliente/fría, sobre TODO el historial del casino (no la ventana de
   10). Chi-cuadrado de bondad de ajuste con 2 grados de libertad (3
   docenas); como chi²(2 g.l.) es exactamente una exponencial de tasa 1/2, el
@@ -262,6 +268,29 @@ VITE_SUPABASE_ANON_KEY=
   mano, sesgadas a propósito hacia la 3ª docena): salió chi²=16.55, p≈0.000,
   "Sesgo muy probable", marcando la 3ª docena "Por encima de lo esperado" —
   cálculo correcto.
+- [x] Bloque "Precisión histórica del aviso" en `DozenPrediction.tsx`, entre
+  el grid caliente/fría y "Sesgo histórico" (sin tabla nueva en Supabase, el
+  usuario planteó primero guardar predicciones en una tabla pero se
+  descartó: como la fórmula es determinista, un backtest derivado del
+  historial ya almacenado da el mismo resultado y evita el problema de qué
+  hacer cuando se añaden 10+ números de golpe frente a uno en uno).
+  `buildBacktest()` recorre `spins` en orden (ya vienen ascendentes por
+  `created_at` desde `listSpins`) y en cada tirada calcula qué docena habría
+  sido la caliente usando solo la ventana de 10 previas a ESA tirada (nunca
+  la propia ni las posteriores — misma regla que ve el usuario en vivo),
+  comparándola contra la docena real; las ventanas con empate en el máximo
+  se excluyen del cómputo (`skippedTies`), igual que el bloque en vivo no
+  marca "Más probable" si hay empate. Con `attempts` (predicciones
+  resueltas, no empatadas) ≥30 (mismo umbral que MIN_BIAS_SAMPLE, y motivo:
+  con p=1/3 da np≥5 y n(1-p)≥5 mínimo para que la aproximación normal a la
+  binomial sea válida), se muestra un test binomial de una cola frente a
+  H0: p=1/3 vía aproximación normal (sin corrección de continuidad),
+  clasificado por umbrales de z fijos (1.282/1.645/2.326 ≈ p<0.10/0.05/0.01)
+  en vez de implementar la función de error solo para esto. Verificado con
+  un casino de prueba desechable (49 tiradas variadas, sin sesgo
+  intencionado): 35 predicciones resueltas (13 empates excluidos), 8
+  aciertos = 23%, z=-1.31 → "No bate el azar de forma consistente" —
+  matemáticamente correcto para datos sin sesgo real.
 - [x] Borrado de casino (antes no existía en la UI pese a que este documento
   ya lo daba por hecho). Nuevo `deleteCasino()` en `services/casinos.ts`
   (`DELETE` sobre `casinos`, se apoya en el `ON DELETE CASCADE` de

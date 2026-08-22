@@ -5,7 +5,7 @@ import { useCasinos } from "./hooks/useCasinos";
 import { useSpins } from "./hooks/useSpins";
 import { createCasino } from "./services/casinos";
 import { SpinHistory } from "./components/SpinHistory/SpinHistory";
-import { QuadrantPrediction } from "./components/QuadrantPrediction/QuadrantPrediction";
+import { DozenPrediction } from "./components/DozenPrediction/DozenPrediction";
 import { SearchPanel } from "./components/SearchPanel/SearchPanel";
 import { BetLog } from "./components/BetLog/BetLog";
 import { PatternManager } from "./components/PatternManager/PatternManager";
@@ -135,7 +135,7 @@ export default function App() {
             add={add}
             remove={remove}
           />
-          <QuadrantPrediction spins={spins} />
+          <DozenPrediction spins={spins} />
           <SearchPanel spins={spins} />
           <BetLog casinoId={selectedId} />
           <PatternManager casinoId={selectedId} />

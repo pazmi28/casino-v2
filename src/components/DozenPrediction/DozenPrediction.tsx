@@ -101,6 +101,86 @@ function biasVerdict(pValue: number): {
   };
 }
 
+// Mismo umbral que MIN_BIAS_SAMPLE: con 30 intentos, hits esperados (10) y
+// fallos esperados (20) bajo H0 (p=1/3) superan de sobra el mínimo de 5
+// que exige la aproximación normal a la binomial usada en backtestVerdict.
+const MIN_BACKTEST_SAMPLE = 30;
+
+interface BacktestResult {
+  hits: number;
+  attempts: number;
+  skippedTies: number;
+  pct: number;
+  z: number | null; // null si attempts < MIN_BACKTEST_SAMPLE (aún no fiable)
+}
+
+// Backtest del aviso "docena caliente": recorre el historial en orden y, en
+// cada tirada, calcula qué docena habría sido la caliente usando SOLO las
+// WINDOW tiradas anteriores a esa (nunca la propia ni las posteriores),
+// exactamente la misma regla que ve el usuario en vivo. Compara esa
+// predicción contra la docena real de esa tirada. Las ventanas con empate en
+// el máximo se excluyen del cómputo (no hay una única predicción que
+// evaluar), igual que el bloque en vivo no marca "Más probable" si hay
+// empate.
+function buildBacktest(spins: Spin[]): BacktestResult {
+  let hits = 0;
+  let attempts = 0;
+  let skippedTies = 0;
+
+  for (let i = 1; i < spins.length; i++) {
+    const actualDozen = dozenOf(spins[i].number);
+    if (actualDozen === null) continue; // el 0 no es una docena predecible
+
+    const priorWindow = spins.slice(Math.max(0, i - WINDOW), i);
+    const { stats, total } = buildDozenStats(priorWindow);
+    if (total === 0) continue; // ventana previa sin números válidos
+
+    const hotIdx = extremeIndices(stats, "max");
+    if (hotIdx.length !== 1) {
+      skippedTies++;
+      continue;
+    }
+
+    attempts++;
+    if (stats[hotIdx[0]].key === actualDozen) hits++;
+  }
+
+  const pct = attempts > 0 ? Math.round((hits / attempts) * 100) : 0;
+  if (attempts < MIN_BACKTEST_SAMPLE) {
+    return { hits, attempts, skippedTies, pct, z: null };
+  }
+
+  // Test binomial de una cola frente a H0: p=1/3 (aproximación normal, sin
+  // corrección de continuidad — con attempts≥30 el error es despreciable).
+  const expectedP = 1 / 3;
+  const z =
+    (hits - attempts * expectedP) /
+    Math.sqrt(attempts * expectedP * (1 - expectedP));
+
+  return { hits, attempts, skippedTies, pct, z };
+}
+
+// Umbrales de z para una cola (P(Z > z)): 1.282≈p<0.10, 1.645≈p<0.05,
+// 2.326≈p<0.01. Evita implementar la función de error solo para esto.
+function backtestVerdict(z: number): { label: string; className: string } {
+  if (z >= 2.326) {
+    return { label: "Bate el azar con alta confianza", className: "bg-red-100 text-red-700" };
+  }
+  if (z >= 1.645) {
+    return { label: "Bate el azar", className: "bg-red-100 text-red-700" };
+  }
+  if (z >= 1.282) {
+    return {
+      label: "Posible ventaja (a vigilar)",
+      className: "bg-amber-100 text-amber-700",
+    };
+  }
+  return {
+    label: "No bate el azar de forma consistente",
+    className: "bg-gray-100 text-gray-600",
+  };
+}
+
 function DozenBar({
   label,
   count,
@@ -146,15 +226,19 @@ interface Props {
 // Predicción descriptiva (no una garantía de acierto: cada tirada de ruleta
 // física es independiente) de la próxima docena a partir de las últimas 10
 // tiradas: docena caliente (más apariciones) y docena fría (menos
-// apariciones, lógica "está por salir"). Además, un tercer bloque analiza
-// TODO el historial con un test chi-cuadrado buscando un sesgo físico real
-// de la rueda/mesa (la única fuente legítima de ventaja: el orden de las
-// tiradas no la tiene, cada una es independiente de la anterior).
-export function QuadrantPrediction({ spins }: Props) {
+// apariciones, lógica "está por salir"). Un segundo bloque hace un backtest
+// en cliente (sin persistir nada): recorre el historial en orden evaluando
+// si el aviso de "docena caliente" habría acertado en cada tirada usando
+// solo las anteriores. Un tercer bloque analiza TODO el historial con un
+// test chi-cuadrado buscando un sesgo físico real de la rueda/mesa (la
+// única fuente legítima de ventaja: el orden de las tiradas no la tiene,
+// cada una es independiente de la anterior).
+export function DozenPrediction({ spins }: Props) {
   const sample = useMemo(() => spins.slice(-WINDOW), [spins]);
   const { stats, total } = useMemo(() => buildDozenStats(sample), [sample]);
   const bias = useMemo(() => buildBiasAnalysis(spins), [spins]);
   const fullTotal = useMemo(() => buildDozenStats(spins).total, [spins]);
+  const backtest = useMemo(() => buildBacktest(spins), [spins]);
 
   const windowNote =
     sample.length < WINDOW
@@ -163,7 +247,7 @@ export function QuadrantPrediction({ spins }: Props) {
 
   return (
     <div className="mt-6">
-      <h2 className="text-lg font-semibold mb-2">Predicción Cuadrantes</h2>
+      <h2 className="text-lg font-semibold mb-2">Predicción Decenas</h2>
 
       {total === 0 ? (
         <p className="text-sm text-gray-500">
@@ -239,6 +323,50 @@ export function QuadrantPrediction({ spins }: Props) {
           );
         })()
       )}
+
+      <div className="mt-4 p-3 border rounded bg-white">
+        <h3 className="font-semibold mb-2">Precisión histórica del aviso</h3>
+        {backtest.z === null ? (
+          <p className="text-sm text-gray-500">
+            Aún no hay suficientes predicciones resueltas en el historial (
+            {backtest.attempts} de las {MIN_BACKTEST_SAMPLE} necesarias) para
+            medir la precisión con fiabilidad.
+          </p>
+        ) : (
+          (() => {
+            const verdict = backtestVerdict(backtest.z);
+            return (
+              <>
+                <p className="text-sm text-gray-600 mb-2">
+                  Recorriendo el historial en orden: en cada tirada, ¿acertó
+                  la docena que el aviso de "docena caliente" habría marcado
+                  usando solo las tiradas anteriores a esa?
+                </p>
+                <span
+                  className={`inline-block mb-2 px-1 py-0.5 text-xs rounded ${verdict.className}`}
+                >
+                  {verdict.label}
+                </span>
+                <DozenBar
+                  label="Aciertos del aviso"
+                  count={backtest.hits}
+                  pct={backtest.pct}
+                  title={`${backtest.hits} aciertos de ${backtest.attempts} predicciones resueltas = ${backtest.pct}% (esperado ~33% por azar).`}
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  z = {backtest.z.toFixed(2)} frente al 33.3% esperado por
+                  azar (test binomial de una cola). Se excluyeron{" "}
+                  {backtest.skippedTies} tiradas con empate en la docena
+                  caliente (no había una predicción única que evaluar). Un
+                  resultado por encima del azar de forma sostenida apunta al
+                  mismo sesgo físico que "Sesgo histórico" de abajo, no a que
+                  el orden de los números sea predecible.
+                </p>
+              </>
+            );
+          })()
+        )}
+      </div>
 
       <div className="mt-4 p-3 border rounded bg-white">
         <h3 className="font-semibold mb-2">Sesgo histórico (todo el historial)</h3>
